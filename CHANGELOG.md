@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-24
+
 ### Added
 
 - Meteo.lt weather for Gladys (Gladys 5.2.0 or later): the current weather
@@ -24,4 +26,5 @@ the notes of the version's GitHub Release.
 - Settings: units and language of the scene texts. A "Test Meteo.lt" button
   that names the station and the forecast place used.
 
-[Unreleased]: https://github.com/guim31/gladys-meteo-lt/commits/main
+[Unreleased]: https://github.com/guim31/gladys-meteo-lt/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-meteo-lt/releases/tag/v1.0.0

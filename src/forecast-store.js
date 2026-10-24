@@ -266,6 +266,20 @@ function createForecastStore({
         // The current conditions are a bonus: without them, the forecast
         // describes the weather now.
         forecast.observation = await observe(observations, station, key);
+        if (blockedUntil > now()) {
+          // The station call was throttled or refused: keep the pause and its
+          // growing delay, the forecast itself is still good.
+          const at = now();
+          const entry = {
+            forecast,
+            fetchedAt: at,
+            checkedAt: at,
+            expiresAt: at + DEFAULT_EXPIRY_MS,
+          };
+          entries.set(key, entry);
+          missing.delete(key);
+          return entry;
+        }
         const at = now();
         const entry = { forecast, fetchedAt: at, checkedAt: at, expiresAt: at + DEFAULT_EXPIRY_MS };
         entries.set(key, entry);
@@ -276,6 +290,11 @@ function createForecastStore({
         failures.recover(`api:${key}`, 'Meteo.lt answers again');
         return entry;
       } catch (err) {
+        if (err.status === 404) {
+          // A place or station code Meteo.lt no longer knows: read the lists
+          // again at the next attempt instead of waiting a day.
+          catalog.invalidate();
+        }
         recordFailure(err, key);
         throw err;
       } finally {

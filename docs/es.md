@@ -133,7 +133,7 @@ disponible** es no: no lo interprete como tiempo seco.
 
 ### Obtener la previsión del día
 
-Acción: lee la previsión de **hoy** o de **mañana** de una vivienda, y
+Acción: lee la previsión de **hoy** (el resto del día) o de **mañana** de una vivienda, y
 devuelve:
 
 - el cielo, como código Gladys (`clear`, `partly-cloudy`, `rain`, `snow`…)

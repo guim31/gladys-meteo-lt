@@ -149,3 +149,24 @@ test('days sum the periods, pick the noon symbol, and drop a last day barely ent
     assert.ok(day.symbol !== null, 'every day has a symbol');
   }
 });
+
+test('today is the rest of the day once now is given; gusts belong to their period', () => {
+  const forecast = forecastOf(HOUSES.vilnius);
+  const options = {
+    latitude: HOUSES.vilnius.latitude,
+    longitude: HOUSES.vilnius.longitude,
+    timeZone: TZ,
+  };
+  const evening = Date.parse('2026-10-24T15:30:00Z');
+  const [today] = buildDays(forecast, { ...options, now: evening });
+  const ahead = forecast.points.filter(
+    (point) => point.time + HOUR_MS > evening && point.time < today.end,
+  );
+  assert.equal(today.temperatureMin, Math.min(...ahead.map((point) => point.temperature)));
+  assert.equal(today.temperatureMax, Math.max(...ahead.map((point) => point.temperature)));
+  // The hour row of 15:00 carries the gust of 15:00-16:00 (the step of 16:00).
+  const weather = buildWeather(forecast, { ...options, units: 'metric', now: evening });
+  const step = forecast.points.find((point) => point.time === evening + HOUR_MS / 2);
+  assert.equal(weather.hours[0].datetime, '2026-10-24T15:00:00.000Z');
+  assert.equal(weather.hours[0].wind_gust, step.windGust);
+});

@@ -250,3 +250,32 @@ test('a throttled list (429) pauses every call, and shows in the status', async 
   });
   assert.equal(forecastCalls(fetchImpl).length, 0);
 });
+
+test('a throttled station keeps the pause growing; the forecast is still served', async () => {
+  const base = meteoLtRoute();
+  const { gladys, app, now } = await start({
+    route: (url) => (url.endsWith('/observations/latest') ? { status: 429, body: '' } : base(url)),
+  });
+  assert.ok(app.store.blockedUntil > now(), 'paused');
+  assert.equal(app.store.lastError.kind, 'throttled');
+  const ack = await gladys.fake.weatherGet({
+    latitude: HOUSES.vilnius.latitude,
+    longitude: HOUSES.vilnius.longitude,
+    language: 'en',
+    units: 'metric',
+  });
+  assert.equal(ack.success, true, 'served from the forecast');
+});
+
+test('a forecast 404 makes the place list be read again at the next attempt', async () => {
+  let gone = true;
+  const base = meteoLtRoute();
+  const { app, fetchImpl, now } = await start({
+    route: (url) =>
+      gone && url.endsWith('/forecasts/long-term') ? { status: 404, body: '' } : base(url),
+  });
+  gone = false;
+  now.advance(3 * MINUTE);
+  await app.scheduler.requestCycle();
+  assert.equal(listCalls(fetchImpl).length, 4, 'places and stations read twice');
+});

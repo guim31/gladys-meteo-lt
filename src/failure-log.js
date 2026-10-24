@@ -57,7 +57,7 @@ function createFailureLog(logger) {
    * @param {string} key - The key.
    * @returns {boolean} True while failing.
    * @example
-   * failures.failing('fmi');
+   * failures.failing('api');
    */
   function failing(key) {
     return active.has(key);

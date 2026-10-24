@@ -129,7 +129,7 @@ read it as dry.
 
 ### Get the forecast of the day
 
-Action: reads the forecast of **today** or **tomorrow** for a house, and
+Action: reads the forecast of **today** (the rest of the day) or **tomorrow** for a house, and
 returns:
 
 - the sky, as a Gladys code (`clear`, `partly-cloudy`, `rain`, `snow`…) and

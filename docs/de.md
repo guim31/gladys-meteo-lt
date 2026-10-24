@@ -135,7 +135,7 @@ verfügbar** nein: Lies das nicht als trocken.
 
 ### Tagesvorhersage abrufen
 
-Aktion: liest die Vorhersage für **heute** oder **morgen** eines Zuhauses
+Aktion: liest die Vorhersage für **heute** (den Rest des Tages) oder **morgen** eines Zuhauses
 und gibt zurück:
 
 - den Himmel, als Gladys-Code (`clear`, `partly-cloudy`, `rain`, `snow`…)

@@ -139,7 +139,7 @@ sec.
 
 ### Obtenir la prévision du jour
 
-Action : lit la prévision d'**aujourd'hui** ou de **demain** pour une
+Action : lit la prévision d'**aujourd'hui** (le reste de la journée) ou de **demain** pour une
 maison, et renvoie :
 
 - le ciel, en code Gladys (`clear`, `partly-cloudy`, `rain`, `snow`…) et en

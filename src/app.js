@@ -62,7 +62,6 @@ function connectionStatus(summary) {
       return { connected: false, message: MESSAGES.throttled };
     case ERROR_KINDS.FORBIDDEN:
       return { connected: false, message: MESSAGES.forbidden };
-    case ERROR_KINDS.REQUEST:
     case ERROR_KINDS.INVALID:
       return { connected: false, message: MESSAGES.noForecast };
     default:

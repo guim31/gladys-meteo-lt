@@ -16,8 +16,8 @@
 //                 strongest gust;
 //   sun           sunrise and sunset, computed (sun.js).
 //
-// Meteo.lt's forecast starts at the hour it was made, a few hours ago: today
-// also holds those past hours, as long as the cached forecast has them.
+// Meteo.lt's forecast starts at the hour it was made, a few hours ago: given
+// `now`, the past hours are left out, so today is the rest of the day.
 // -----------------------------------------------------------------------------
 
 import { toCondition } from './symbols.js';
@@ -48,6 +48,7 @@ function precipitationTimeline(points) {
       symbol: point.period.symbol,
       precipitation: point.period.precipitation,
       probability: point.period.probability,
+      gust: point.period.gust ?? null,
     });
     coveredUntil = end;
   }
@@ -98,7 +99,7 @@ function minOf(a, b) {
  * @example
  * buildDays(forecast, { latitude: 43.6, longitude: 1.44, timeZone: 'Europe/Paris' });
  */
-function buildDays(forecast, { latitude, longitude, timeZone }) {
+function buildDays(forecast, { latitude, longitude, timeZone, now = null }) {
   const days = new Map();
   const dayOf = (ms) => {
     const start = startOfDay(ms, timeZone);
@@ -125,7 +126,10 @@ function buildDays(forecast, { latitude, longitude, timeZone }) {
     return day;
   };
 
-  for (const point of forecast.points) {
+  // With `now`, the hours already past are left out: today is the rest of
+  // the day (Meteo.lt's forecast starts a few hours before now).
+  const ahead = (end) => now === null || end > now;
+  for (const point of forecast.points.filter((candidate) => ahead(candidate.time + HOUR_MS))) {
     const day = dayOf(point.time);
     day.instants += 1;
     day.temperatureMin = minOf(day.temperatureMin, point.temperature);
@@ -134,7 +138,6 @@ function buildDays(forecast, { latitude, longitude, timeZone }) {
       day.windSpeed = point.windSpeed;
       day.windDirection = point.windDirection;
     }
-    day.windGust = maxOf(day.windGust, point.windGust);
     day.uvIndex = maxOf(day.uvIndex, point.uvIndex);
     if (point.humidity !== null) {
       day.humiditySum += point.humidity;
@@ -142,9 +145,11 @@ function buildDays(forecast, { latitude, longitude, timeZone }) {
     }
   }
 
-  for (const period of precipitationTimeline(forecast.points)) {
+  for (const period of precipitationTimeline(forecast.points).filter((p) => ahead(p.end))) {
     const middle = (period.start + period.end) / 2;
     const day = dayOf(middle);
+    // The gust of a period is its strongest over the period (1, 3 or 6 h).
+    day.windGust = maxOf(day.windGust, period.gust);
     if (period.symbol !== null) {
       day.symbols.push({ ...period, middle });
     }

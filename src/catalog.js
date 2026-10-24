@@ -139,6 +139,9 @@ function createCatalog({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
 
   return {
     load,
+    invalidate: () => {
+      expiresAt = 0;
+    },
     placeFor: (latitude, longitude) =>
       places === null ? null : nearest(places, latitude, longitude, MAX_PLACE_DISTANCE_KM),
     stationFor: (latitude, longitude) =>

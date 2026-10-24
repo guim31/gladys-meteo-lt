@@ -145,7 +145,7 @@ function buildWeather(forecast, { latitude, longitude, units, timeZone, now = Da
     dew_point: convert.temperature(measured('dewPoint')),
     wind_speed: convert.speed(measured('windSpeed')),
     wind_direction: round(measured('windDirection'), 0),
-    wind_gust: convert.speed(measured('windGust')),
+    wind_gust: convert.speed(observed?.windGust ?? current.period?.gust ?? null),
     cloud_cover: round(measured('cloudCover'), 0),
     uv_index: round(current.uvIndex, 0),
     sunrise: isoDate(today.sunrise),
@@ -171,7 +171,7 @@ function buildWeather(forecast, { latitude, longitude, units, timeZone, now = Da
         pressure: convert.pressure(point.pressure),
         wind_speed: convert.speed(point.windSpeed),
         wind_direction: round(point.windDirection, 0),
-        wind_gust: convert.speed(point.windGust),
+        wind_gust: convert.speed(point.next1.gust),
         cloud_cover: round(point.cloudCover, 0),
         precipitation: convert.precipitation(point.next1.precipitation),
         precipitation_probability: round(point.next1.probability, 0),
@@ -180,7 +180,7 @@ function buildWeather(forecast, { latitude, longitude, units, timeZone, now = Da
       }),
     );
 
-  weather.days = buildDays(forecast, { latitude, longitude, timeZone })
+  weather.days = buildDays(forecast, { latitude, longitude, timeZone, now })
     .filter((day) => day.end > now)
     .slice(0, MAX_DAYS)
     .map((day) =>

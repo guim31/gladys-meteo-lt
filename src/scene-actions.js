@@ -98,6 +98,7 @@ function dayForecast(forecast, { house, day, language, units, timeZone, now = Da
     latitude: house.latitude,
     longitude: house.longitude,
     timeZone,
+    now,
   }).filter((candidate) => candidate.end > now);
   // Today is the day holding now; tomorrow the one after it.
   const today = days.findIndex((candidate) => candidate.start <= now);

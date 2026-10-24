@@ -102,7 +102,7 @@ test('the forecast of tomorrow, in German, without probability', () => {
   assert.equal(outputs.summary, 'Morgen: Klarer Himmel, 5,7 bis 11,7 °C, kein Niederschlag.');
 });
 
-test('the rainy Sunday of Vilnius, in French', () => {
+test('the rest of the rainy Monday of Vilnius, in French', () => {
   const outputs = dayForecast(forecastOf(HOUSES.vilnius), {
     house: HOUSES.vilnius,
     day: 'today',
@@ -112,7 +112,10 @@ test('the rainy Sunday of Vilnius, in French', () => {
     now: Date.parse('2026-10-26T06:00:00Z'),
   });
   assert.equal(outputs.condition, 'rain');
-  assert.equal(outputs.summary, 'Aujourd’hui : pluie, de 4,7 à 10,4 °C, 1,8 mm de précipitations.');
+  assert.equal(
+    outputs.summary, // The 1.5 mm of the first hours are past at 09:00: today is the rest of the day.
+    'Aujourd’hui : pluie, de 4,7 à 10 °C, 0,3 mm de précipitations.',
+  );
 });
 
 test('the precipitation trigger fires on the dry → wet transition only', async () => {

@@ -30,6 +30,17 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration stores nothing on disk: `/data` stays empty, and the lists of
+places and stations, the forecasts and the observations live in memory only.
+It holds no secret (Meteo.lt needs no key) and makes only HTTPS requests to
+`api.meteo.lt`: the lists of places and stations, then the forecast of a place
+and the readings of a station, by their public codes. The coordinates of the
+houses of Gladys, read through the Gladys host API (`location: true`), never
+leave the container: the nearest place and station are picked locally. It
+opens no port. An answer of Meteo.lt is parsed as JSON data only (no
+evaluation), its codes are checked before they go into a request path, and
+the core bounds the weather payload again.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and the Meteo.lt service.

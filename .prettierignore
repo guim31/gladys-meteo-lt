@@ -2,3 +2,5 @@ node_modules/
 package-lock.json
 /data/
 *.log
+# Untouched bodies of real Meteo.lt answers (see test/fixtures/README.md).
+test/fixtures/real-*.json

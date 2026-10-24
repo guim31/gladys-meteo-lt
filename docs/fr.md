@@ -1,67 +1,230 @@
-# Template de démonstration
+# Meteo.lt
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+La météo de la Lituanie dans Gladys, par [Meteo.lt](https://www.meteo.lt/),
+le service du Service hydrométéorologique lituanien (LHMT, Lietuvos
+hidrometeorologijos tarnyba) : les **mesures de la station météo la plus
+proche** et la **prévision officielle** du lieu le plus proche (heure par
+heure sur 2 jours et demi environ, jusqu'à 7 jours). Données ouvertes : **ni
+compte, ni clé d'API**.
+
+Source : Lithuanian Hydrometeorological Service under the Ministry of
+Environment (LHMT), données sous licence
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.fr).
+Cette intégration est un projet communautaire, sans lien avec le LHMT.
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+- **Le widget météo de Gladys et l'assistant de discussion** utilisent
+  Meteo.lt : la météo actuelle mesurée par la station du LHMT la plus proche
+  (température, température ressentie, ciel observé, humidité, pression,
+  vent et rafales, couverture nuageuse), complétée par la prévision pour ce
+  que la station ne mesure pas, le lever et le coucher du soleil, les 24
+  prochaines heures avec les précipitations de chaque heure, et les jours
+  suivants (7 en tout). Le jour et la nuit ont leurs propres icônes. Tout
+  s'affiche en **°C, m/s et mm** ou en **°F, mph et pouces**, selon le
+  système d'unités de chaque utilisateur de Gladys.
+- **Déclencheur de scène « Pluie ou neige attendue dans l'heure »**.
+- **Action de scène « Obtenir les précipitations de l'heure à venir »**.
+- **Action de scène « Obtenir la prévision du jour »** (aujourd'hui ou
+  demain).
+
+Pas de widget en plus : le widget météo de Gladys affiche déjà la météo
+actuelle et la prévision.
+
+**Pas de vigilances météo.** L'API de Meteo.lt ne publie aucune vigilance
+(le LHMT les publie sur son site) : le widget météo n'affiche pas d'alerte,
+et le déclencheur d'alerte météo intégré à Gladys reste muet avec ce
+fournisseur.
+
+**Lituanie et villes proches seulement.** Meteo.lt prévoit le temps de 2 444
+lieux : toutes les villes et tous les villages lituaniens d'une certaine
+taille, et les principales villes de Lettonie, d'Estonie et du nord-est de
+la Pologne. Une maison reçoit la prévision du lieu le plus proche à moins de
+30 km ; au-delà, il n'y a pas de prévision et Gladys utilise un autre
+fournisseur météo. Pour une prévision mondiale, installez plutôt
+**MET Norway**.
+
+## Installation
+
+1. Vérifiez que votre maison a une position dans Gladys : **Paramètres →
+   Maisons**, puis l'adresse ou la position sur la carte. L'intégration
+   rafraîchit la météo de chaque maison qui en a une.
+2. Installez **Meteo.lt** depuis le store des intégrations (ou
+   **Intégrations → Installer depuis GitHub** avec l'adresse
+   `https://github.com/guim31/gladys-meteo-lt`). Gladys vous demande
+   d'autoriser l'accès à la position de vos maisons : l'intégration y trouve
+   le lieu et la station les plus proches, et surveille la pluie de l'heure
+   à venir.
+3. Ouvrez l'onglet **Configuration** et cliquez sur **Tester Meteo.lt**. La
+   réponse affiche la température actuelle de votre première maison, la
+   station qui l'a mesurée et le lieu de sa prévision.
+
+C'est tout : le widget météo de votre tableau de bord affiche maintenant
+Meteo.lt. Si une autre intégration météo est installée, choisissez le
+fournisseur dans les réglages du widget météo.
+
+Gladys 5.2 ou plus récent est nécessaire.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+Rien n'est obligatoire.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+- **Unités des valeurs de scène** — les unités des températures, du vent et
+  des précipitations que l'intégration met dans les variables de scène.
+  **Automatique** suit le système d'unités du dernier utilisateur qui a
+  consulté la météo ; choisissez **Métrique** ou **US** pour le fixer. Le
+  widget météo suit toujours la préférence de chaque utilisateur.
+- **Langue des textes de scène** — la langue des phrases que l'intégration
+  met dans les variables de scène (« Pluie faible attendue dans 35
+  minutes. ») : anglais, français, allemand ou espagnol. Français par
+  défaut ; **Automatique** suit la langue de votre Gladys.
 
-## Actions
+## Fréquence de mise à jour et conditions de Meteo.lt
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+Meteo.lt publie ses données librement, dans certaines limites (180 requêtes
+par minute par adresse Internet, et pas plus de 20 000 par jour).
+L'intégration reste très en dessous :
+
+- elle **rafraîchit toutes les 30 minutes environ**, plus quelques minutes
+  au hasard pour que tous les Gladys n'appellent pas à la même seconde
+  (Meteo.lt met à jour sa prévision 8 fois par jour, ses stations toutes
+  les heures) ;
+- par maison, elle fait **un appel de prévision et un appel de station**
+  (les maisons au même endroit les partagent) : environ 100 requêtes par
+  jour pour une maison, plus les listes des lieux et des stations **une fois
+  par jour**. Ces appels alimentent tout : le tableau de bord, la discussion
+  et les scènes. Ouvrir le tableau de bord ne coûte rien : Gladys est servi
+  depuis la mémoire ;
+- elle s'identifie
+  (`gladys-meteo-lt/<version> github.com/guim31/gladys-meteo-lt`) ;
+- elle fait une pause si Meteo.lt demande de ralentir (erreur 429) ou
+  refuse les requêtes (erreur 403).
+
+Pendant une panne, la dernière prévision reste affichée 3 heures au plus.
+Une mesure de station de plus de 90 minutes n'est plus utilisée.
 
 ## Scènes
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+L'intégration ajoute ses cartes à l'éditeur de scènes, dans la catégorie
+**Intégrations**. Le champ **Maison** liste vos maisons.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+### Pluie ou neige attendue dans l'heure
 
-## Tableau de bord
+Déclencheur : lance la scène quand la prévision horaire annonce des
+précipitations cette heure-ci ou la suivante, là où la mise à jour
+précédente n'en annonçait pas. Il se déclenche une fois par épisode, au plus
+une fois par heure et par maison, et jamais à la première mise à jour après
+un redémarrage.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Filtres facultatifs (vides : tout correspond) :
+
+- **Maison** ;
+- **Précipitations** : pluie, neige fondue ou neige ;
+- **Intensité** : faible, modérée ou forte.
+
+Variables pour les actions suivantes : le nom de la maison, le type de
+précipitations (`rain`, `sleet`, `snow`), l'intensité (`light`,
+`moderate`, `heavy`), la présence d'orage, les minutes avant le début (0 si
+cela tombe déjà), la quantité attendue sur cette heure, et un **résumé**
+prêt à envoyer, par exemple : « Pluie faible attendue dans 35 minutes. »
+
+### Obtenir les précipitations de l'heure à venir
+
+Action : indique à la scène si de la pluie ou de la neige arrive dans
+l'heure (**Précipitations attendues** : oui ou non), quand, quoi, avec
+quelle intensité, et le même résumé. Laissez **Maison** vide pour votre
+première maison qui a une position. Si aucune prévision horaire ne couvre
+l'heure, **Prévision disponible** vaut non : ne le lisez pas comme un temps
+sec.
+
+### Obtenir la prévision du jour
+
+Action : lit la prévision d'**aujourd'hui** ou de **demain** pour une
+maison, et renvoie :
+
+- le ciel, en code Gladys (`clear`, `partly-cloudy`, `rain`, `snow`…) et en
+  toutes lettres (« Pluie ») ;
+- les températures minimale et maximale ;
+- les précipitations du jour ;
+- le vent le plus fort et la rafale la plus forte ;
+- un **résumé**, par exemple : « Demain : neige, de -3 à 1 °C, 4,2 mm de
+  précipitations. »
+
+## Exemples de scènes
+
+- **Rentrer le linge** : déclencheur « Pluie ou neige attendue dans
+  l'heure », puis une notification avec la variable **résumé**.
+- **La neige arrive** : déclencheur « Pluie ou neige attendue dans
+  l'heure », précipitations neige, intensité modérée ou forte, puis un
+  rappel de rentrer la voiture au garage.
+- **Météo du matin** : à 7 h, action « Obtenir la prévision du jour »
+  (aujourd'hui), puis un message avec son **résumé**.
+
+## Limites
+
+- **Développée sans Gladys en Lituanie** : l'intégration est testée sur de
+  vraies réponses de Meteo.lt (Vilnius, Kaunas et Klaipėda, 24 octobre
+  2026). Vos retours sont les bienvenus.
+- **Lituanie et villes proches seulement** (voir plus haut), et **pas de
+  vigilances météo**.
+- **La prévision est celle du lieu le plus proche**, pas de la position
+  exacte de la maison : Meteo.lt prévoit des lieux, pas des coordonnées.
+- **La station est la plus proche à moins de 50 km** ; sa mesure compte
+  tant qu'elle a moins de 90 minutes. Une station ne mesure pas tout (pas de
+  couverture nuageuse dans le brouillard, par exemple) : la prévision
+  complète ce qui manque. Sans station, la météo actuelle est la prévision
+  de l'heure.
+- **Ni probabilité de précipitations, ni point de rosée, ni indice UV** :
+  Meteo.lt ne les donne pas.
+- **L'heure est le pas le plus fin**, sur 2 jours et demi environ ; ensuite
+  3 heures, puis 6 heures. Au-delà de la partie horaire, l'heure à venir est
+  « non disponible ».
+- **Les jours** sont découpés dans le fuseau horaire de Gladys, pour toutes
+  les maisons.
+- L'intégration demande Gladys 5.2 ou plus récent.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Aucune maison de Gladys n'a de position »** — renseignez la position de
+  votre maison dans **Paramètres → Maisons**.
+- **« Meteo.lt n'a pas de prévision pour la position de votre maison »** —
+  la maison est à plus de 30 km de tout lieu de Meteo.lt (hors de la
+  Lituanie et de ses environs), ou sa position est fausse : vérifiez-la dans
+  **Paramètres → Maisons**.
+- **« Meteo.lt demande de ralentir »** — trop de requêtes depuis votre
+  connexion Internet : l'intégration attend et réessaie d'elle-même.
+- **« Meteo.lt refuse les requêtes (HTTP 403) »** — mettez à jour
+  l'intégration.
+- **« Meteo.lt est injoignable pour le moment »** — Gladys n'atteint pas
+  `api.meteo.lt` : vérifiez son accès à Internet. L'intégration réessaie
+  après 5 minutes, puis de moins en moins souvent.
+- **Le test ne cite pas de station** — la station la plus proche est à plus
+  de 50 km, ou n'a rien mesuré récemment : la météo actuelle vient de la
+  prévision.
+- **Le tableau de bord affiche toujours un autre fournisseur** — ouvrez les
+  réglages du widget météo et choisissez Meteo.lt.
+- **Journaux** : l'onglet **Journaux** de l'intégration (ou `docker logs` sur
+  l'hôte) montre le démarrage, les problèmes et le retour de Meteo.lt, une
+  fois chacun. Démarrez le conteneur avec `LOG_LEVEL=debug` pour voir chaque
+  mise à jour.
+
+## Vie privée
+
+Les coordonnées de vos maisons ne quittent jamais Gladys : l'intégration
+télécharge la liste des lieux et des stations et choisit elle-même les plus
+proches. Meteo.lt ne voit que les codes de ce lieu et de cette station (une
+ville ou un village, et une station). Ni compte, ni clé, rien n'est écrit
+sur le disque.
+
+## Crédits
+
+Observations et prévisions : Lithuanian Hydrometeorological Service under
+the Ministry of Environment (LHMT, [meteo.lt](https://www.meteo.lt/)), par
+l'[API Meteo.lt](https://api.meteo.lt/), sous licence
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.fr) ; les
+données sont converties au format météo de Gladys (unités, conditions,
+jours). Les symboles météo suivent la légende de
+[metno/weathericons](https://github.com/metno/weathericons) (MET Norway). Le
+code de prévision vient des intégrations
+[FMI](https://github.com/guim31/gladys-fmi) et
+[Met Éireann](https://github.com/guim31/gladys-met-eireann) du même auteur.

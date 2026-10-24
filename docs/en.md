@@ -1,61 +1,215 @@
-# Demo Devices Template
+# Meteo.lt
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+The weather of Lithuania in Gladys, from [Meteo.lt](https://www.meteo.lt/),
+the service of the Lithuanian Hydrometeorological Service (LHMT, Lietuvos
+hidrometeorologijos tarnyba): the **measurements of the nearest weather
+station** and the **official forecast** of the nearest place (hourly for
+about 2.5 days, up to 7 days). Open data: **no account, no API key**.
+
+Source: Lithuanian Hydrometeorological Service under the Ministry of
+Environment (LHMT), data licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). This
+integration is a community project, not affiliated with LHMT.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+- **The Gladys weather widget and the chat assistant** use Meteo.lt: the
+  current weather measured by the nearest LHMT station (temperature,
+  feels-like temperature, the sky it observes, humidity, pressure, wind and
+  gusts, cloud cover), completed by the forecast for what the station does
+  not measure, sunrise and sunset, the next 24 hours with the precipitation
+  of each hour, and the next days (7 in all). Day and night have their own
+  icons. Everything is shown in **°C, m/s and mm** or in **°F, mph and
+  inches**, following the unit system of each Gladys user.
+- **Scene trigger "Rain or snow expected within the hour"**.
+- **Scene action "Get the precipitation of the next hour"**.
+- **Scene action "Get the forecast of the day"** (today or tomorrow).
+
+No extra widget: the Gladys weather widget already shows the current
+weather and the forecast.
+
+**No weather warnings.** The Meteo.lt API publishes no warning (LHMT
+publishes them on its website): the weather widget shows no alert, and the
+built-in weather alert trigger of Gladys stays silent with this provider.
+
+**Lithuania and nearby towns only.** Meteo.lt forecasts 2,444 places: every
+Lithuanian town and village of some size, and the main towns of Latvia,
+Estonia and north-eastern Poland. A house gets the forecast of the nearest
+place within 30 km; farther, there is no forecast and Gladys uses another
+weather provider. For a worldwide forecast, install **MET Norway** instead.
+
+## Installation
+
+1. Check that your house has a location in Gladys: **Settings → Houses**,
+   then the address or the position on the map. The integration refreshes
+   the weather of every house that has one.
+2. Install **Meteo.lt** from the integration store (or **Integrations →
+   Install from GitHub** with the address
+   `https://github.com/guim31/gladys-meteo-lt`). Gladys asks you to allow
+   access to the location of your houses: it finds their nearest place and
+   station, and watches the rain of the next hour.
+3. Open the **Configuration** tab and click **Test Meteo.lt**. The answer
+   shows the current temperature of your first house, the station that
+   measured it and the place of its forecast.
+
+That's it: the weather widget of your dashboard now shows Meteo.lt. If
+another weather integration is installed, pick the provider in the settings
+of the weather widget.
+
+Gladys 5.2 or later is required.
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+Nothing is mandatory.
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+- **Units of the scene values** — the units of the temperatures, wind and
+  precipitation the integration puts in scene variables. **Automatic**
+  follows the unit system of the last user who looked at the weather; pick
+  **Metric** or **US** to set it. The weather widget always follows each
+  user's own preference.
+- **Language of the scene texts** — the language of the sentences the
+  integration puts in scene variables ("Light rain expected in 35
+  minutes."): English, French, German or Spanish. French by default;
+  **Automatic** follows the language of your Gladys.
 
-## Actions
+## Refresh rate and Meteo.lt's terms
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+Meteo.lt publishes its data openly, within limits (180 requests a minute per
+Internet address, and no more than 20,000 a day). The integration stays far
+below them:
+
+- it **refreshes about every 30 minutes**, plus a few random minutes so that
+  every Gladys does not call at the same second (Meteo.lt updates its
+  forecast 8 times a day, its stations every hour);
+- per house, it makes **one forecast call and one station call** (houses at
+  the same place share them): about 100 requests a day for one house, plus
+  the lists of places and stations **once a day**. These feed everything:
+  the dashboard, the chat and the scenes. Opening the dashboard costs
+  nothing: Gladys is served from memory;
+- it identifies itself
+  (`gladys-meteo-lt/<version> github.com/guim31/gladys-meteo-lt`);
+- it pauses if Meteo.lt asks to slow down (error 429) or refuses the
+  requests (error 403).
+
+During an outage, the last forecast stays visible for 3 hours at most. A
+station measurement older than 90 minutes is no longer used.
 
 ## Scenes
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+The integration adds its cards to the scene editor, in the **Integrations**
+category. The **House** field lists your houses.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+### Rain or snow expected within the hour
 
-## Dashboard
+Trigger: starts the scene when the hourly forecast shows precipitation this
+hour or the next one, where the previous refresh showed none. It fires once
+per event, at most once an hour per house, and never on the first refresh
+after a restart.
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+Optional filters (empty: everything matches):
+
+- **House**;
+- **Precipitation**: rain, sleet or snow;
+- **Intensity**: light, moderate or heavy.
+
+Variables for the next actions: the name of the house, the kind of
+precipitation (`rain`, `sleet`, `snow`), the intensity (`light`,
+`moderate`, `heavy`), whether there is thunder, the minutes until it starts
+(0 if it is already falling), the amount expected that hour, and a
+**summary** ready to send, for example: "Light rain expected in 35
+minutes."
+
+### Get the precipitation of the next hour
+
+Action: tells the scene whether rain or snow is coming within the hour
+(**Precipitation expected**: yes or no), when, what, how hard, and the same
+summary. Leave **House** empty for your first house that has a location. If
+no hourly forecast covers the hour, **Forecast available** is no: do not
+read it as dry.
+
+### Get the forecast of the day
+
+Action: reads the forecast of **today** or **tomorrow** for a house, and
+returns:
+
+- the sky, as a Gladys code (`clear`, `partly-cloudy`, `rain`, `snow`…) and
+  in words ("Rain");
+- the minimum and maximum temperatures;
+- the precipitation of the day;
+- the strongest wind and the strongest gust;
+- a **summary**, for example: "Tomorrow: snow, -3 to 1 °C, 4.2 mm of
+  precipitation."
+
+## Scene examples
+
+- **Bring the washing in**: trigger "Rain or snow expected within the hour",
+  then a notification with the **summary** variable.
+- **Snow on the way**: trigger "Rain or snow expected within the hour",
+  precipitation snow, intensity moderate or heavy, then a reminder to move
+  the car into the garage.
+- **Morning weather**: at 7:00, action "Get the forecast of the day"
+  (today), then a message with its **summary**.
+
+## Limits
+
+- **Developed without a Gladys running in Lithuania**: the integration is
+  tested against real answers of Meteo.lt (Vilnius, Kaunas and Klaipėda, 24
+  October 2026). Feedback welcome.
+- **Lithuania and nearby towns only** (see above), and **no weather
+  warnings**.
+- **The forecast is the one of the nearest place**, not of the exact
+  position of the house: Meteo.lt forecasts places, not coordinates.
+- **The station is the nearest one within 50 km**; its reading counts while
+  it is less than 90 minutes old. A station does not measure everything (no
+  cloud cover in fog, for example): the forecast fills in what it lacks.
+  Without a station, the current weather is the forecast of the hour.
+- **No probability of precipitation, dew point nor UV index**: Meteo.lt does
+  not give them.
+- **The hour is the finest step**, for about 2.5 days; then 3 hours, then 6
+  hours. Beyond the hourly part, the next hour is "not available".
+- **The days** are cut in the time zone of Gladys, for every house.
+- The integration needs Gladys 5.2 or later.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"No house of Gladys has a location"** — set the location of your house in
+  **Settings → Houses**.
+- **"Meteo.lt has no forecast for the location of your house"** — the house
+  is more than 30 km from every Meteo.lt place (outside Lithuania and its
+  neighbourhood), or its location is wrong: check it in **Settings →
+  Houses**.
+- **"Meteo.lt asks to slow down"** — too many requests from your Internet
+  connection: the integration waits and retries by itself.
+- **"Meteo.lt refuses the requests (HTTP 403)"** — update the integration.
+- **"Meteo.lt is unreachable for now"** — Gladys cannot reach
+  `api.meteo.lt`: check its Internet access. The integration retries after
+  5 minutes, then less and less often.
+- **The test does not name a station** — the nearest station is more than
+  50 km away, or measured nothing recently: the current weather comes from
+  the forecast.
+- **The dashboard still shows another provider** — open the settings of the
+  weather widget and pick Meteo.lt.
+- **Logs**: the **Logs** tab of the integration (or `docker logs` on the
+  host) shows the start, the problems and the return of Meteo.lt, once each.
+  Start the container with `LOG_LEVEL=debug` to see every refresh.
+
+## Privacy
+
+The coordinates of your houses never leave Gladys: the integration
+downloads the list of places and stations and picks the nearest ones
+itself. Meteo.lt only sees the codes of that place and that station (a town
+or a village, and a station). No account, no key, nothing is written to
+disk.
+
+## Credits
+
+Observations and forecasts: Lithuanian Hydrometeorological Service under
+the Ministry of Environment (LHMT, [meteo.lt](https://www.meteo.lt/)),
+through the [Meteo.lt API](https://api.meteo.lt/), licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); the data
+are converted to the Gladys weather format (units, conditions, days). The
+weather symbols follow the legend of
+[metno/weathericons](https://github.com/metno/weathericons) (MET Norway).
+The forecast code comes from the [FMI](https://github.com/guim31/gladys-fmi)
+and [Met Éireann](https://github.com/guim31/gladys-met-eireann)
+integrations of the same author.

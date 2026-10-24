@@ -30,17 +30,35 @@ pushing.
 
 ## Architecture
 
+A **weather** integration (manifest `type: "weather"`): no devices, a provider
+API. Gladys asks for the weather of a house (`onWeatherGet`), the integration
+answers in the pivot format of the core from what it keeps in memory: the
+latest reading of the nearest LHMT station and the forecast of the nearest
+Meteo.lt place. No alerts: the Meteo.lt API publishes no warning.
+
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: createApp() then connect()
+src/app.js                        the integration on an injected client: handlers, status, lifecycle
+src/api.js                        the four Meteo.lt requests (addresses, User-Agent, error kinds, code check)
+src/catalog.js                    places and stations (once a day), the nearest place (30 km) and station (50 km)
+src/forecast.js                   forecast → slim metric forecast (1, 3 and 6-hour periods), UTC times
+src/observations.js               the latest reading of a station with a temperature (90 min freshness)
+src/forecast-store.js             cache per location (forecast + observation); 30 min floor, 429/403 pauses
+src/scheduler.js                  refresh timer: 30 min + 0-5 min jitter, retries
+src/pivot.js                      slim forecast (+ observation) → pivot weather (current, 24 hours, days)
+src/daily.js                      days cut at local midnights, precipitation timeline
+src/symbols.js                    Meteo.lt conditionCode → MET Norway symbol codes → Gladys conditions
+src/sun.js, src/time.js           computed sunrise/sunset (NOAA), local days (TZ)
+src/next-hour.js                  precipitation within the hour (trigger + action)
+src/scene-triggers.js             "precipitation_expected" (dry → wet, baseline, 1 h cooldown)
+src/scene-actions.js              "get_precipitation_next_hour", "get_day_forecast"
+src/houses.js                     the houses of Gladys (getHouses, `location: true`)
+src/failure-log.js                repeated failures logged once (warn, debug, then info on recovery)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+src/texts.js, src/units.js        texts in en/fr/de/es, metric → us conversions
+gladys-assistant-integration.json manifest: name, config_schema, actions, scene cards, image...
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
+test/                             node --test, against the SDK's fake Gladys and real API responses
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +88,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, scene texts, manifest texts, and `docs/{en,fr,de,es}.md`, kept in
+  sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +252,46 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Meteo.lt (cette intégration)
+
+**API** (https://api.meteo.lt/, documentée en lituanien ; données ouvertes, sans clé, CC BY-SA 4.0,
+citer le LHMT) :
+
+- `GET /v1/places` (2 444 lieux : LT, et villes de LV, EE, PL) et `GET /v1/stations` (52 stations
+  automatiques) : lues une fois par jour (`catalog.js`). Lieu le plus proche à 30 km au plus, sinon
+  « pas de prévision » (`invalid`, sans appel) ; station la plus proche à 50 km au plus (tout lieu
+  lituanien est à moins de 44 km d'une station, mesuré le 24/10/2026).
+- `GET /v1/places/{code}/forecasts/long-term` : 85 pas, 52 d'une heure puis 26 de 3 h et 6 de 6 h,
+  jusqu'à J+7 ; mise à jour 8 fois par jour ; commence à l'heure de calcul (quelques heures avant
+  maintenant).
+- `GET /v1/stations/{code}/observations/latest` : les relevés horaires des dernières 24 h.
+- Limites : 180 requêtes/min par IP, 20 000/jour. Ici : 2 par maison toutes les 30 min, plus les
+  2 listes par jour. Les coordonnées des maisons ne partent jamais : seuls les codes de lieu et de
+  station.
+- Réponses réelles du 24/10/2026 dans `test/fixtures/` (voir leur README, exclues de Prettier).
+
+**Pièges découverts.**
+
+- Heures en UTC **sans fuseau** (`"2026-10-24 02:00:00"`) : `Date.parse` les lit en heure locale.
+  Toujours passer par `parseUtc` (`forecast.js`), y compris dans les tests.
+- `totalPrecipitation` et `windGust` d'un pas couvrent **le pas qui se termine** à cette heure (1, 3
+  ou 6 h) : la période est rattachée au point qui la commence (comme FMI et Met Éireann), avec le
+  `conditionCode` du pas qui la termine.
+- Les observations ont **30 codes** de conditions, les prévisions 19 : quatre n'ont pas de symbole
+  MET (`thunder`, `freezing-rain`, `hail`, `squall`) et sont traités à part dans `symbols.js`
+  (orage, pluie verglaçante, grêle, vent). `null` = conditions non déterminées.
+- La station donne sa propre température ressentie et le ciel qu'elle observe : ils remplacent
+  ceux de la prévision quand le relevé a moins de 90 min. Dans le brouillard, `cloudCover` est
+  `null` : la prévision complète.
+- Code inconnu : **404** `{"error":{"code":404,"message":"Not Found"}}`. Les codes sont vérifiés
+  (`[a-z0-9-]`) avant d'entrer dans un chemin.
+- Ni probabilité de précipitations, ni point de rosée, ni UV : les sorties correspondantes ont été
+  retirées du manifeste (le code les omet quand elles sont nulles).
+- **Vigilances** : l'API n'en publie pas. La bibliothèque de Home Assistant (`meteo_lt-pkg`) lit un
+  fichier interne du site, `https://www.meteo.lt/app/mu-plugins/Meteo/Components/WeatherWarningsNew/list_JSON.php`,
+  non documenté et sans conditions d'utilisation : écarté (consigne : API ou flux CAP officiel
+  seulement). À reconsidérer si Guilhem l'accepte.
+
+**Choix (à revoir si besoin).** Type `weather` comme FMI et Met Éireann. Pas de déclencheur ni
+d'action de vigilance (rien à lire). Pas de réglage de lieu : le plus proche suffit.

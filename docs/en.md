@@ -56,7 +56,7 @@ That's it: the weather widget of your dashboard now shows Meteo.lt. If
 another weather integration is installed, pick the provider in the settings
 of the weather widget.
 
-Gladys 5.2 or later is required.
+Gladys 5.3 or later is required.
 
 ## Configuration
 
@@ -168,7 +168,7 @@ returns:
 - **The hour is the finest step**, for about 2.5 days; then 3 hours, then 6
   hours. Beyond the hourly part, the next hour is "not available".
 - **The days** are cut in the time zone of Gladys, for every house.
-- The integration needs Gladys 5.2 or later.
+- The integration needs Gladys 5.3 or later.
 
 ## Troubleshooting
 

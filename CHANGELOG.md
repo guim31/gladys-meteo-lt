@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-13
+
 ### Changed
 
 - Declared for Lithuania, Latvia, Estonia and Poland only (`countries: ["LT", "LV", "EE", "PL"]`): the Gladys catalog of an
@@ -32,5 +34,6 @@ the notes of the version's GitHub Release.
 - Settings: units and language of the scene texts. A "Test Meteo.lt" button
   that names the station and the forecast place used.
 
-[Unreleased]: https://github.com/guim31/gladys-meteo-lt/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/guim31/gladys-meteo-lt/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-meteo-lt/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/guim31/gladys-meteo-lt/releases/tag/v1.0.0

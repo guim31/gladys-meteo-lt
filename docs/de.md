@@ -61,7 +61,7 @@ Das war's: Das Wetter-Widget deines Dashboards zeigt jetzt Meteo.lt. Ist
 eine andere Wetter-Integration installiert, wähle den Anbieter in den
 Einstellungen des Wetter-Widgets.
 
-Gladys 5.2 oder neuer ist erforderlich.
+Gladys 5.3 oder neuer ist erforderlich.
 
 ## Konfiguration
 
@@ -177,7 +177,7 @@ und gibt zurück:
   Stunde „nicht verfügbar“.
 - **Die Tage** werden in der Zeitzone von Gladys geschnitten, für alle
   Zuhause.
-- Die Integration braucht Gladys 5.2 oder neuer.
+- Die Integration braucht Gladys 5.3 oder neuer.
 
 ## Fehlerbehebung
 

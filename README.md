@@ -31,7 +31,7 @@ The user documentation, in four languages, is in [`docs/`](docs/en.md).
 
 ## Install
 
-In Gladys 5.2.0 or later: **Integrations → Install from GitHub**, address
+In Gladys 5.3.0 or later: **Integrations → Install from GitHub**, address
 `https://github.com/guim31/gladys-meteo-lt` (or from the integration store
 once published). Give your houses a location (**Settings → Houses**), then
 click **Test Meteo.lt** in the **Configuration** tab.
